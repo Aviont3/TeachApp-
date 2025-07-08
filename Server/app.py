@@ -1,65 +1,73 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, Response
 from flask_cors import CORS
-from bson import ObjectId
 from pymongo import MongoClient
+from bson import ObjectId
+import json
 
-# Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Allow requests from frontend
+CORS(app, origins=["http://localhost:5173"])
 
-# Connect to MongoDB
-client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient("mongodb+srv://aviontewilliams:5IWlS82zuPuTdixZ@cluster1.u6vzl8d.mongodb.net/")
 db = client.flashcards_db
-cards = db.cards  # Collection
+cards = db.cards
 
-# Helper function to convert MongoDB document to JSON-friendly dict
 def serialize_card(card):
     card['_id'] = str(card['_id'])
     return card
 
-# Get all flashcards
+def send_json(data, status=200):
+    return Response(
+        response=json.dumps(data),
+        status=status,
+        mimetype='application/json'
+    )
+
 @app.route('/api/cards', methods=['GET'])
 def get_cards():
     all_cards = [serialize_card(card) for card in cards.find()]
-    return jsonify(all_cards)
+    return send_json(all_cards)
 
-# Get a single flashcard by ID
 @app.route('/api/cards/<id>', methods=['GET'])
 def get_card(id):
-    card = cards.find_one({'_id': ObjectId(id)})
-    if card:
-        return jsonify(serialize_card(card))
-    return jsonify({'error': 'Not found'}), 404
+    try:
+        card = cards.find_one({'_id': ObjectId(id)})
+        if card:
+            return send_json(serialize_card(card))
+    except:
+        pass
+    return send_json({'error': 'Not found'}, 404)
 
-# Create a new flashcard
 @app.route('/api/cards', methods=['POST'])
 def add_card():
     data = request.json
-    # Validate input
     if not data or 'question' not in data or 'answer' not in data:
-        return jsonify({'error': 'Missing question or answer'}), 400
+        return send_json({'error': 'Missing question or answer'}, 400)
 
+    result = cards.insert_one({
+        'question': data['question'],
+        'answer': data['answer']
+    })
     new_card = {
+        '_id': str(result.inserted_id),
         'question': data['question'],
         'answer': data['answer']
     }
-    result = cards.insert_one(new_card)
-    new_card['_id'] = str(result.inserted_id)
-    return jsonify(new_card), 201
+    return send_json(new_card, 201)
 
-# Delete a flashcard by ID
 @app.route('/api/cards/<id>', methods=['DELETE'])
 def delete_card(id):
-    result = cards.delete_one({'_id': ObjectId(id)})
-    if result.deleted_count == 1:
-        return jsonify({'success': True})
-    return jsonify({'error': 'Not found'}), 404
+    try:
+        result = cards.delete_one({'_id': ObjectId(id)})
+        if result.deleted_count == 1:
+            return send_json({'success': True})
+    except:
+        pass
+    return send_json({'error': 'Not found'}, 404)
 
-# Health check route
 @app.route('/api/test', methods=['GET'])
 def test():
-    return jsonify({'message': 'API is working!'})
+    return send_json({'message': 'API is working!'})
 
 if __name__ == '__main__':
+    print("✅ Server running on http://localhost:5000")
     app.run(debug=True)
-
