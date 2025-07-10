@@ -152,20 +152,10 @@ npm run dev
 
 ---
 
-## 💡 How to Extend
-
-- Add user authentication
-- Edit/update flashcards
-- Organize cards into decks
-- Flashcard quiz mode
-- Dark mode toggle
-
----
 
 ## 👩🏽‍💻 Author
 
 Avionte Williams  
-[LinkedIn](https://www.linkedin.com/in/YOURNAME) | [GitHub](https://github.com/YOURUSERNAME)
 
 ---
 
