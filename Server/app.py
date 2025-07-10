@@ -6,7 +6,10 @@ import json
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:5173"])
-      //create your MongoDB clusters. Instructions in readMe
+      
+
+
+//create your MongoDB clusters. Instructions in readMe
 client = MongoClient("mongoclusters")
 db = client.flashcards_db
 cards = db.cards
